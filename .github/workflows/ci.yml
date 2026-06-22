@@ -1,0 +1,51 @@
+name: '[ CI ] | Continuous Integration'
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      spec:
+        description: The SEMVER specification.
+        required: true
+        type: choice
+        default: patch
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0
+        with:
+          scandir: './core'
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: 'Run offline harness'
+        shell: bash
+        run: bash test/run.sh
+
+  release:
+    runs-on: ubuntu-24.04
+    needs: [ci, test]
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - uses: heronlabs/action-tag-release-build@ba855c016cdbb6ce0937626718c65c95ed5e1998 # v3.0.0
+        with:
+          github-token: ${{ github.token }}
+          spec: ${{ inputs.spec || 'patch' }}

@@ -1,0 +1,10 @@
+{
+  "stack": "shell",
+  "verify": {
+    "lint": "shellcheck core/*.sh test/run.sh test/gh",
+    "test": "bash test/run.sh"
+  },
+  "worktree": { "dir": ".worktrees", "base": "main" },
+  "pr": { "base": "main", "remote": "origin" },
+  "audits": { "security": false, "freshness": { "level": "off" } }
+}

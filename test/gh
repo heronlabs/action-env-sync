@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Minimal `gh` stub for action-env-sync offline tests.
+#
+# Emulates only the gh surface the action uses:
+#   gh pr list   --base T --head S --state open --json ... --jq ...  -> echoes $GH_STUB_PRLIST_OUT
+#   gh pr create --base T --head S --title ... --body ...            -> echoes $GH_STUB_PR_URL
+#   gh pr close  N --comment ...                                     -> no-op (exit 0)
+#
+# Every invocation is appended (one line, full argv) to $GH_LOG so tests can assert
+# which subcommands ran and with which flags. State is injected via env so each test
+# decides what "already exists" looks like.
+set -euo pipefail
+
+: "${GH_LOG:?GH_LOG must point at a log file}"
+printf 'gh %s\n' "$*" >>"$GH_LOG"
+
+case "${1:-} ${2:-}" in
+  "pr list")   printf '%s' "${GH_STUB_PRLIST_OUT:-}" ;;
+  "pr create") printf '%s' "${GH_STUB_PR_URL:-https://github.com/o/r/pull/999}" ;;
+  "pr close")  : ;;
+  *) printf 'gh stub: unhandled argv: %s\n' "$*" >&2; exit 1 ;;
+esac

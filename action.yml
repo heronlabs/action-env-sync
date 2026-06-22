@@ -1,0 +1,52 @@
+name: action-env-sync
+
+author: Heron Labs
+
+description: Fan a source branch out into target environment branches — push if clean, open a PR if it conflicts
+
+branding:
+  icon: git-merge
+  color: blue
+
+inputs:
+  source-branch:
+    description: Branch to sync from
+    required: false
+    default: ${{ github.ref_name }}
+  target-branches:
+    description: Newline/comma-separated list of branches to sync to (e.g. staging, development)
+    required: true
+  github-token:
+    description: >-
+      Token with contents:write (push to targets) and pull-requests:write (open PRs).
+      Use a PAT or GitHub App token allowed to push to the protected target branches;
+      pass the same token to actions/checkout so the push is authenticated.
+    required: true
+  merge-message:
+    description: Merge-commit subject template; {source} and {target} are substituted
+    required: false
+    default: 'Merge {source} into {target}'
+
+outputs:
+  synced:
+    description: Targets cleanly merged and pushed (newline list)
+    value: ${{ steps.sync.outputs.synced }}
+  conflicts:
+    description: Targets that received a resolution PR (newline list)
+    value: ${{ steps.sync.outputs.conflicts }}
+  pr-urls:
+    description: URLs of opened/updated PRs (newline list)
+    value: ${{ steps.sync.outputs.pr-urls }}
+
+runs:
+  using: composite
+  steps:
+    - name: 'Sync branches'
+      id: sync
+      shell: bash
+      env:
+        SOURCE_BRANCH: ${{ inputs.source-branch }}
+        TARGET_BRANCHES: ${{ inputs.target-branches }}
+        MERGE_MESSAGE: ${{ inputs.merge-message }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: bash ${{ github.action_path }}/core/sync-branches.sh
