@@ -1,16 +1,10 @@
 # Environment Sync Action
 
-A GitHub Action that **fans a source branch out into long-lived environment branches**. When a PR merges to `main`, it keeps every environment branch (e.g. `staging`, `development`) in sync — automatically.
+[![CI](https://github.com/heronlabs/action-env-sync-build/actions/workflows/ci.yml/badge.svg)](https://github.com/heronlabs/action-env-sync-build/actions/workflows/ci.yml)
 
-For each target branch:
+> Fan a source branch out into long-lived environment branches — push if clean, open a PR if it conflicts.
 
-- **Clean merge** → a 2-parent merge commit is pushed straight to the target (zero clicks).
-- **Conflict** (or the push is refused by branch protection) → a resolution **PR** is opened/updated for a human to resolve.
-- **Already up to date** → no-op.
-
-Targets are synced **independently** (fan-out): one target's conflict never blocks another. A conflict keeps the run **green** — the PR is the signal; only broken plumbing (bad inputs, auth failure) fails the run.
-
-Branch names are arbitrary — `main`/`staging`/`development`, `master`/`stg`/`dev`, whatever your repo uses.
+When a PR merges to `main`, this keeps every environment branch (e.g. `staging`, `development`) in sync. Targets are synced independently: one target's conflict never blocks another, and a conflict keeps the run green — the PR is the signal. Branch names are arbitrary (`main`/`staging`/`development`, `master`/`stg`/`dev`, whatever your repo uses).
 
 ## Usage
 
@@ -30,10 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0                      # full history is required
-          token: ${{ secrets.SYNC_TOKEN }}    # same token used to push to targets
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
 
-      - uses: heronlabs/action-env-sync-build@v1
+      - uses: heronlabs/action-env-sync-build@v3
         with:
           target-branches: |
             staging
@@ -43,44 +37,35 @@ jobs:
 
 ## Inputs
 
-| Input | Required | Default | Description |
+| Name | Description | Required | Default |
 |---|---|---|---|
-| `source-branch` | no | `${{ github.ref_name }}` | Branch to sync **from**. On a push to `main`, this is `main`. |
-| `target-branches` | **yes** | — | Newline- or comma-separated list of branches to sync **to**. |
-| `github-token` | **yes** | — | Token with `contents: write` (push to targets) and `pull-requests: write` (open PRs). |
-| `merge-message` | no | `Merge {source} into {target}` | Merge-commit subject template. `{source}` / `{target}` are substituted. |
+| `source-branch` | Branch to sync from. | No | `${{ github.ref_name }}` |
+| `target-branches` | Newline- or comma-separated list of branches to sync to (e.g. `staging`, `development`). | Yes | — |
+| `github-token` | Token with `contents: write` (push to targets) and `pull-requests: write` (open PRs). Pass the same token to `actions/checkout`. | Yes | — |
+| `merge-message` | Merge-commit subject template; `{source}` and `{target}` are substituted. | No | `Merge {source} into {target}` |
 
 ## Outputs
 
-| Output | Description |
+| Name | Description |
 |---|---|
-| `synced` | Newline list of targets cleanly merged and pushed. |
-| `conflicts` | Newline list of targets that received a resolution PR. |
-| `pr-urls` | Newline list of opened/updated PR URLs. |
+| `synced` | Targets cleanly merged and pushed (newline list). |
+| `conflicts` | Targets that received a resolution PR (newline list). |
+| `pr-urls` | URLs of opened/updated PRs (newline list). |
 
-## Requirements
+## Permissions
 
-### Full history
+```yaml
+permissions:
+  contents: write
+  pull-requests: write
+```
 
-The action merges with git plumbing, so the consumer's `actions/checkout` **must** use `fetch-depth: 0`. A shallow checkout fails fast with a clear error.
-
-### Token & branch protection
-
-Clean syncs push directly to target branches, which are usually protected. The default `GITHUB_TOKEN`:
-
-- is commonly **blocked by branch protection** (can't push to `staging`/`development`), and
-- its pushes **don't trigger downstream workflows**.
-
-So use a **Personal Access Token** or **GitHub App token** that is allowed to push to the protected targets (or is on their bypass list), and pass it to **both** `actions/checkout` (`token:`) and this action (`github-token:`). The checkout token is what authenticates the `git push`; the action token is what `gh` uses to open PRs.
-
-If a push is refused for lack of permission, the action **degrades gracefully to opening a PR** rather than failing — so a misconfigured token surfaces as PRs, not red runs.
-
-## Behavior reference
+## Behavior
 
 | Situation | Outcome |
 |---|---|
 | Target merges cleanly | Merge commit pushed to target; run green. |
-| Target conflicts | Resolution PR opened (or reused if one is already open); run green. |
+| Target conflicts | Resolution PR opened (or reused if already open); run green. |
 | Push to target refused | Retried once, then a resolution PR is opened; run green. |
 | Target already contains source | No-op. |
 | Target branch doesn't exist | Skipped, noted in the job summary; run green. |
@@ -88,15 +73,12 @@ If a push is refused for lack of permission, the action **degrades gracefully to
 | Clean push after a prior conflict PR | The now-stale PR is closed automatically. |
 | Missing/invalid `target-branches`, unresolvable source, auth failure | Run fails (red). |
 
-## Development
+## Notes
 
-```bash
-shellcheck core/*.sh        # lint (matches CI)
-bash test/run.sh            # offline harness — temp git repos + a gh stub, no network
-```
-
-The harness in [`test/run.sh`](test/run.sh) builds throwaway repos with diverging branches and asserts every behavior above.
+- Requires `fetch-depth: 0` on `actions/checkout`; a shallow clone fails fast with a clear error.
+- The default `GITHUB_TOKEN` is usually blocked by branch protection and won't trigger downstream workflows. Use a PAT or GitHub App token allowed to push to the protected targets, and pass it to **both** `actions/checkout` (`token:`) and this action (`github-token:`): checkout's token authenticates the `git push`, the action's token opens PRs.
+- Conflicts and refused pushes degrade to a resolution PR and keep the run green; only auth/plumbing errors (bad inputs, unresolvable source) fail it.
 
 ## License
 
-MIT © Heron Labs
+MIT
