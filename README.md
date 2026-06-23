@@ -1,6 +1,6 @@
 # Environment Sync Action
 
-[![CI](https://github.com/heronlabs/action-env-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/heronlabs/action-env-sync/actions/workflows/ci.yml)
+[![CI](https://github.com/heronlabs/action-env-sync-build/actions/workflows/ci.yml/badge.svg)](https://github.com/heronlabs/action-env-sync-build/actions/workflows/ci.yml)
 
 > Fan a source branch out into long-lived environment branches — push if clean, open a PR if it conflicts.
 
@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.SYNC_TOKEN }}
 
-      - uses: heronlabs/action-env-sync@v3
+      - uses: heronlabs/action-env-sync-build@v3
         with:
           target-branches: |
             staging

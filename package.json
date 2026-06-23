@@ -1,10 +1,10 @@
 {
-  "name": "action-env-sync",
+  "name": "action-env-sync-build",
   "version": "3.0.0",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/heronlabs/action-env-sync.git"
+    "url": "git+https://github.com/heronlabs/action-env-sync-build.git"
   },
   "author": "Heron Labs",
   "license": "MIT"

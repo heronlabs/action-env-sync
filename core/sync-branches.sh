@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# action-env-sync — fan a source branch out into target branches.
+# action-env-sync-build — fan a source branch out into target branches.
 #
 # For each target: if the merge of source is clean, push a 2-parent merge commit
 # straight to the target; if it conflicts (or the push is rejected), open/update a

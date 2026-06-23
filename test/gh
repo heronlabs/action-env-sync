@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Minimal `gh` stub for action-env-sync offline tests.
+# Minimal `gh` stub for action-env-sync-build offline tests.
 #
 # Emulates only the gh surface the action uses:
 #   gh pr list   --base T --head S --state open --json ... --jq ...  -> echoes $GH_STUB_PRLIST_OUT
