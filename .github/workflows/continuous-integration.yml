@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: bats-core/bats-action@4e0ffe95d8e0dba5e342b23791127b7ebc713107 # v4.0.0
+      - uses: bats-core/bats-action@5b1e60c2ee94cb1b44a616ea4b1f466f9d6e38ef # 4.0.0
 
       - name: 'Run bats tests'
         shell: bash
